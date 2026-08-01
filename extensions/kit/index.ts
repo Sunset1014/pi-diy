@@ -1,10 +1,14 @@
 /**
- * Kit Extension —— pi-diy 资产包管理（原 kit-setup + kit-backup 合并）
+ * Kit Extension —— pi-diy 资产包管理
  *
  * 子命令：
  *   /kit setup   —— 部署 agents/ 和 AGENTS.md 到 <agentDir>/（幂等，不覆盖已有文件）
  *   /kit backup  —— AI 驱动备份：大模型按固定工作流同步资产进 pi-diy 仓库并推送
  *   /kit         —— 显示用法
+ *
+ * 结构说明：本目录必须是子目录结构（index.ts + core.ts），
+ * pi 只把每个子目录的 index.ts 当扩展加载，core.ts 只是依赖模块，
+ * 不会被误加载；整目录复制到约定目录即可，不存在跨目录依赖。
  *
  * 原理：扩展只守安全底线（定位仓库、预检敏感文件），备份流程本身
  * 通过 pi.sendUserMessage() 交给会话内大模型按固定工作流自主执行。
@@ -16,7 +20,7 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
-import { buildWorkflow, deployDir, deployFile, forbiddenChanges } from "../lib/kit-core.ts";
+import { buildWorkflow, deployDir, deployFile, forbiddenChanges } from "./core.ts";
 
 const USAGE = `/kit setup  —— 部署 agents/AGENTS.md 到 ~/.pi/agent/（幂等，不覆盖）
 /kit backup —— AI 驱动备份（盘点→同步→提交→推送→汇报）`;
@@ -25,7 +29,7 @@ const isGitRepo = (dir: string) => fs.existsSync(path.join(dir, ".git"));
 
 /** 定位 pi-diy 仓库：包安装方式自身即在仓库内；约定目录加载方式按 env → 常见位置兜底。 */
 function findKitRepo(): string | null {
-	const own = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+	const own = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 	if (isGitRepo(own)) return own;
 
 	if (process.env.PI_KIT_REPO && isGitRepo(process.env.PI_KIT_REPO)) return process.env.PI_KIT_REPO;
@@ -40,14 +44,19 @@ function findKitRepo(): string | null {
 	return null;
 }
 
+/** 包/扩展目录根：extensions/ 的上一级（仓库根或 ~/.pi/agent）。 */
+function kitRoot(): string {
+	return path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
+}
+
 /** /kit setup：把包内 agents/ 和 AGENTS.md 部署到 pi 配置目录。 */
 async function runSetup(pi: ExtensionAPI, ctx: ExtensionCommandContext) {
-	// 包安装时 kitDir = 仓库根；约定目录加载时 kitDir = ~/.pi/agent（源=目标，幂等无害）
-	const kitDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+	// 包安装时 root = 仓库根；约定目录加载时 root = ~/.pi/agent（源=目标，幂等无害）
+	const root = kitRoot();
 	const agentDir = getAgentDir();
 
-	const agents = deployDir(path.join(kitDir, "agents"), path.join(agentDir, "agents"));
-	const agentsMd = deployFile(path.join(kitDir, "AGENTS.md"), path.join(agentDir, "AGENTS.md"));
+	const agents = deployDir(path.join(root, "agents"), path.join(agentDir, "agents"));
+	const agentsMd = deployFile(path.join(root, "AGENTS.md"), path.join(agentDir, "AGENTS.md"));
 
 	const lines: string[] = [];
 	if (agents.copied.length > 0) lines.push(`Copied agents: ${agents.copied.join(", ")}`);

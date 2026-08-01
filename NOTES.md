@@ -22,3 +22,14 @@
 - 问题：本机约定目录从未部署过 kit-setup.ts（打包时新建入仓、忘了复制回本机），用户发现 /kit-setup 缺失
 - 修复：kit-setup.ts + kit-backup.ts 合并为 extensions/kit.ts（子命令 setup/backup，带 Tab 补全）；纯函数合并为 lib/kit-core.ts；删 4 个旧文件
 - 本机已部署 kit.ts，旧 kit-backup.ts 已删；隔离环境验证 /kit 注册成功
+
+## 2025-08-02 事故复盘：lib/ 漏拷导致 pi 启动崩溃（重要教训）
+- 事故：kit-backup.ts 部署到 ~/.pi/agent/extensions/ 时，依赖的 ../lib/kit-backup-core.ts 未部署（~/.pi/agent/lib/ 不存在）→ pi 任何模式启动 code=1
+- 根因：约定目录结构与包结构不同（包有 lib/，约定目录没有）；跨目录相对依赖在两种加载方式下不成立
+- 修复（另一终端补 lib/ 文件；本终端根治）：
+  1. kit 扩展改为子目录结构 extensions/kit/（index.ts + core.ts），依赖同目录化
+  2. 依据 pi 加载规则：顶层 *.ts/*.js 全加载；子目录只认 index.ts（core.ts 不会被误加载）
+  3. 删除 lib/ 目录，单测直接针对 extensions/kit/core.ts
+  4. 本机部署 = 整个 kit/ 目录复制，无遗漏可能
+- 教训：①部署约定目录必须复制整个扩展目录结构；②扩展不要跨目录 import（除非在包内）；③改动后必须在本机真实启动验证（pi -p），不能只测隔离环境
+- 验证：隔离环境 /kit 注册 OK；本机真实启动 OK（此前的崩溃已消除）

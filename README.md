@@ -21,7 +21,7 @@
 - `tools.ts` — `/tools` 交互式开关工具
 - `plan-mode/` — `/plan` 计划模式：深度调研、生成 PLAN_HANDOFF.md、上下文清理
 - `subagent/` — subagent 工具：单/并行/链式委派子 agent（agents 从 `~/.pi/agent/agents/` 读取）
-- `kit.ts` — `/kit setup` 一键部署 agents/AGENTS.md；`/kit backup` AI 驱动备份（大模型按固定流程同步资产进仓库并推送）
+- `kit/` — `/kit setup` 一键部署 agents/AGENTS.md；`/kit backup` AI 驱动备份（大模型按固定流程同步资产进仓库并推送）
 
 ---
 
@@ -124,4 +124,5 @@ pi update --extensions          # 未 pin ref 时直接同步
 
 - **不含** `auth.json`（API key 明文，禁止入库，新设备 `/login` 解决）
 - **不含** `settings.json`（主题/默认模型是个人偏好，不是资产）
-- **agents 为什么用 `/kit setup` 部署？** pi package 只支持 extensions/skills/prompts/themes 四类资源；subagent 扩展的 agents 必须放在 `~/.pi/agent/agents/`，所以由本包的 `kit.ts` 扩展代为复制，幂等且不覆盖已有文件
+- **agents 为什么用 `/kit setup` 部署？** pi package 只支持 extensions/skills/prompts/themes 四类资源；subagent 扩展的 agents 必须放在 `~/.pi/agent/agents/`，所以由本包的 `kit/` 扩展代为复制，幂等且不覆盖已有文件
+- **kit 扩展为何是子目录结构？** pi 约定目录只把顶层 `*.ts/*.js` 和子目录的 `index.ts` 当扩展加载。子目录结构（`extensions/kit/index.ts` + `core.ts`）保证纯函数模块不被误加载，且整个目录可整体复制部署，不存在跨目录依赖——曾因 `lib/` 依赖漏拷导致 pi 启动崩溃，此为事故修复后的结构约定
