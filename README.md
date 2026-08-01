@@ -22,6 +22,7 @@
 - `plan-mode/` — `/plan` 计划模式：深度调研、生成 PLAN_HANDOFF.md、上下文清理
 - `subagent/` — subagent 工具：单/并行/链式委派子 agent（agents 从 `~/.pi/agent/agents/` 读取）
 - `kit-setup.ts` — `/kit-setup` 一键部署 agents 和 AGENTS.md（本包专用）
+- `kit-backup.ts` — `/kit-backup` AI 驱动备份：大模型按固定流程同步资产进仓库并推送
 
 ---
 
@@ -31,16 +32,28 @@ pi 的全部用户资产都在 `~/.pi/agent/` 一个目录里。备份 = 把这�
 
 ### 一、日常备份（旧设备）
 
-**1. DIY 资产进 git（本仓库）**
+**1. AI 自动备份（推荐）**
+
+在 pi 里执行 `/kit-backup`：扩展预检（仓库定位 + 敏感文件防线）后，把固定工作流交给大模型自主执行——盘点资产差异 → 把新版 agents/AGENTS.md/扩展/提示词同步进仓库 → 按 Conventional Commits 分主题提交 → push → 汇报剩余手动备份项。
+
+```bash
+pi
+# 进入后执行：
+/kit-backup
+```
+
+**2. 手动备份（等价操作）**
 
 ```bash
 cd <本机 pi-diy 仓库路径>   # 旧设备上 clone 下来的位置
+# 把 ~/.pi/agent/ 下新版 agents/*.md、AGENTS.md、新扩展/新提示词同步进仓库
+# 然后：
 git add -A
 git commit -m "feat: update xxx"
 git push
 ```
 
-**2. 凭证与偏好（不入库，手动保存）**
+**3. 凭证与偏好（不入库，手动保存）**
 
 | 文件 | 内容 | 处理 |
 | --- | --- | --- |
@@ -48,11 +61,11 @@ git push
 | `~/.pi/agent/settings.json` | 主题、默认模型等偏好 | 很小（<1KB），同上复制；或换设备后 `/settings` 重设 |
 | `~/.pi/agent/keybindings.json`（如有） | 自定义快捷键 | 同上 |
 
-**3. 可选：会话历史**
+**4. 可选：会话历史**
 
 `~/.pi/agent/sessions/`（约 1MB）是历史对话，纯本地文件。想保留就整体复制到同步盘/U 盘，不想要就跳过——不影响任何功能。
 
-**4. 无需备份**
+**5. 无需备份**
 
 - `models-store.json` — 模型目录缓存，启动自动重建
 - `bin/fd.exe` — Windows 工具二进制，按新设备平台重新安装（Linux: `apt install fd-find`，macOS: `brew install fd`）
