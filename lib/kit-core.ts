@@ -1,7 +1,47 @@
 /**
- * Kit backup core: forbidden-file checks and the fixed AI backup workflow.
+ * Kit core: pure logic shared by the /kit extension (setup + backup).
  * No pi imports (unit-testable with plain node).
  */
+
+import * as fs from "node:fs";
+import * as path from "node:path";
+
+// --- setup: deploy agents & AGENTS.md ---
+
+export interface DeployResult {
+	copied: string[];
+	skipped: string[];
+}
+
+/** Copy every file from sourceDir into targetDir, never overwriting. */
+export function deployDir(sourceDir: string, targetDir: string): DeployResult {
+	const result: DeployResult = { copied: [], skipped: [] };
+	if (!fs.existsSync(sourceDir)) return result;
+	fs.mkdirSync(targetDir, { recursive: true });
+	for (const name of fs.readdirSync(sourceDir)) {
+		const src = path.join(sourceDir, name);
+		const dst = path.join(targetDir, name);
+		if (!fs.statSync(src).isFile()) continue;
+		if (fs.existsSync(dst)) {
+			result.skipped.push(name);
+		} else {
+			fs.copyFileSync(src, dst);
+			result.copied.push(name);
+		}
+	}
+	return result;
+}
+
+/** Copy a single file, never overwriting. */
+export function deployFile(sourceFile: string, targetFile: string): DeployResult {
+	if (!fs.existsSync(sourceFile)) return { copied: [], skipped: [] };
+	if (fs.existsSync(targetFile)) return { copied: [], skipped: [path.basename(targetFile)] };
+	fs.mkdirSync(path.dirname(targetFile), { recursive: true });
+	fs.copyFileSync(sourceFile, targetFile);
+	return { copied: [path.basename(targetFile)], skipped: [] };
+}
+
+// --- backup: forbidden files & AI workflow ---
 
 /** 禁止进入仓库的敏感/个人文件（扩展预检 + 工作流双重防线） */
 export const FORBIDDEN = [
@@ -22,7 +62,7 @@ export function forbiddenChanges(statusLines: string[]): string[] {
 
 /** 固定备份工作流提示词：交给会话内大模型执行。 */
 export function buildWorkflow(kitDir: string, agentDir: string): string {
-	return `# pi 全套 DIY 备份任务（/kit-backup 触发）
+	return `# pi 全套 DIY 备份任务（/kit backup 触发）
 
 你的目标：把 ${agentDir} 下的 pi DIY 资产按固定流程备份到 git 仓库 ${kitDir}（pi-diy 包）。
 严格按以下 5 步执行，不要跳过步骤，不要做流程外的事。

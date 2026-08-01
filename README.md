@@ -8,9 +8,9 @@
 | 目录 | 内容 | 备份方式 |
 | --- | --- | --- |
 | `extensions/` | 5 个单文件扩展 + 2 个扩展包 | ✅ 本仓库 |
-| `agents/` | planner / reviewer / scout / worker（subagent 扩展使用） | ✅ 本仓库（`/kit-setup` 部署） |
+| `agents/` | planner / reviewer / scout / worker（subagent 扩展使用） | ✅ 本仓库（`/kit setup` 部署） |
 | `prompts/` | implement / implement-and-review / scout-and-plan | ✅ 本仓库 |
-| `AGENTS.md` | 全局约定（工作区规则、git 规范等） | ✅ 本仓库（`/kit-setup` 部署） |
+| `AGENTS.md` | 全局约定（工作区规则、git 规范等） | ✅ 本仓库（`/kit setup` 部署） |
 
 扩展明细：
 
@@ -21,8 +21,7 @@
 - `tools.ts` — `/tools` 交互式开关工具
 - `plan-mode/` — `/plan` 计划模式：深度调研、生成 PLAN_HANDOFF.md、上下文清理
 - `subagent/` — subagent 工具：单/并行/链式委派子 agent（agents 从 `~/.pi/agent/agents/` 读取）
-- `kit-setup.ts` — `/kit-setup` 一键部署 agents 和 AGENTS.md（本包专用）
-- `kit-backup.ts` — `/kit-backup` AI 驱动备份：大模型按固定流程同步资产进仓库并推送
+- `kit.ts` — `/kit setup` 一键部署 agents/AGENTS.md；`/kit backup` AI 驱动备份（大模型按固定流程同步资产进仓库并推送）
 
 ---
 
@@ -34,12 +33,12 @@ pi 的全部用户资产都在 `~/.pi/agent/` 一个目录里。备份 = 把这�
 
 **1. AI 自动备份（推荐）**
 
-在 pi 里执行 `/kit-backup`：扩展预检（仓库定位 + 敏感文件防线）后，把固定工作流交给大模型自主执行——盘点资产差异 → 把新版 agents/AGENTS.md/扩展/提示词同步进仓库 → 按 Conventional Commits 分主题提交 → push → 汇报剩余手动备份项。
+在 pi 里执行 `/kit backup`：扩展预检（仓库定位 + 敏感文件防线）后，把固定工作流交给大模型自主执行——盘点资产差异 → 把新版 agents/AGENTS.md/扩展/提示词同步进仓库 → 按 Conventional Commits 分主题提交 → push → 汇报剩余手动备份项。
 
 ```bash
 pi
 # 进入后执行：
-/kit-backup
+/kit backup
 ```
 
 **2. 手动备份（等价操作）**
@@ -92,7 +91,7 @@ pi install git:github.com/Sunset1014/pi-diy
 ```bash
 pi
 # 进入后执行：
-/kit-setup        # 把 agents/ 和 AGENTS.md 部署到 ~/.pi/agent/（已有文件不覆盖）
+/kit setup        # 把 agents/ 和 AGENTS.md 部署到 ~/.pi/agent/（已有文件不覆盖）
 # 重启 pi（或 /reload）让 agents 生效
 ```
 
@@ -117,7 +116,7 @@ pi update --extensions          # 未 pin ref 时直接同步
 # 若安装了固定版本：pi install git:github.com/Sunset1014/pi-diy@新ref
 ```
 
-改了 agents 或 AGENTS.md 且需要覆盖旧设备上的已部署文件：先手动删 `~/.pi/agent/agents/` 下对应文件（或整个目录），再跑 `/kit-setup`（设计上不覆盖已存在文件）。
+改了 agents 或 AGENTS.md 且需要覆盖旧设备上的已部署文件：先手动删 `~/.pi/agent/agents/` 下对应文件（或整个目录），再跑 `/kit setup`（设计上不覆盖已存在文件）。
 
 ---
 
@@ -125,4 +124,4 @@ pi update --extensions          # 未 pin ref 时直接同步
 
 - **不含** `auth.json`（API key 明文，禁止入库，新设备 `/login` 解决）
 - **不含** `settings.json`（主题/默认模型是个人偏好，不是资产）
-- **agents 为什么用 `/kit-setup` 部署？** pi package 只支持 extensions/skills/prompts/themes 四类资源；subagent 扩展的 agents 必须放在 `~/.pi/agent/agents/`，所以由本包的 `kit-setup` 扩展代为复制，幂等且不覆盖已有文件
+- **agents 为什么用 `/kit setup` 部署？** pi package 只支持 extensions/skills/prompts/themes 四类资源；subagent 扩展的 agents 必须放在 `~/.pi/agent/agents/`，所以由本包的 `kit.ts` 扩展代为复制，幂等且不覆盖已有文件

@@ -17,3 +17,8 @@
 - 仓库定位：包安装时自身即仓库；约定目录加载时按 PI_KIT_REPO env → home 常见位置兜底
 - 双重防线：扩展预检 git status 敏感文件 + 工作流内安全检查
 - 本机已部署到 ~/.pi/agent/extensions/，隔离环境验证 /kit-backup 注册成功
+
+## 2025-08-02 /kit 命令合并（响应"太乱"）
+- 问题：本机约定目录从未部署过 kit-setup.ts（打包时新建入仓、忘了复制回本机），用户发现 /kit-setup 缺失
+- 修复：kit-setup.ts + kit-backup.ts 合并为 extensions/kit.ts（子命令 setup/backup，带 Tab 补全）；纯函数合并为 lib/kit-core.ts；删 4 个旧文件
+- 本机已部署 kit.ts，旧 kit-backup.ts 已删；隔离环境验证 /kit 注册成功
