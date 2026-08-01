@@ -30,7 +30,7 @@
 npm install -g @earendil-works/pi-coding-agent
 
 # 2. 安装本包
-pi install git:github.com/<你的用户名>/pi-diy
+pi install git:github.com/Sunset1014/pi-diy
 
 # 3. 启动 pi，执行一次：
 /kit-setup
